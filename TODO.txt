@@ -1,0 +1,2 @@
+Decide on bot design
+Remove codenames_words.txt. Words should be in settings file in hello_mongo repo.
