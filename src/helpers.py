@@ -1,20 +1,8 @@
 #! /usr/bin/env python3
 
 """
-This file may not be needed long term but can be used now to assist with development
-
-To demo, open python3 shell and issue the following:
-
-import settings
-import helpers
-client = helpers.get_mongo_client(settings.MONGO_CLUSTER, settings.MONGO_DATABASE, settings.MONGO_USER, settings.MONGO_PASSWORD)
-helpers.get_document(client, settings.MONGO_DATABASE, settings.collection, "slug")
-
+Helper functions to assist with development
 """
-
-#python3 -m venv test_env source ./test_env/bin/activate
-#
-
 import ssl
 
 import pymongo
@@ -29,14 +17,18 @@ def get_mongo_client(cluster, database, user, password):
     )
 
 
-def get_document(client, database, collection, text, type="stimulus", pos="noun"):
+def get_document(client, database, collection, text, type, pos):
     """Get document from collection"""
 
     db = client[database]
     return db[collection].find_one({"text": text, "type": type, "pos": pos})
 
-def get_all_documents(client, database, collection):
-    """Get all documents from collection"""
+
+def get_document_generator(client, database, collection):
+    """
+    Get generator that yields documents in collection
+    """
 
     db = client[database]
-    return db[collection].find({})
+    for document in db[collection].find():
+        yield document
