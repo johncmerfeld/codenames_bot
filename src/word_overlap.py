@@ -53,7 +53,7 @@ def best_connecting_word(base1, base2):
 
     return best_match
 
-
+# TODO this is doubling the work; only need the upper triangle of the matrix
 def best_clue(word_list):
     """Get the best pairwise connecting word from a group of words"""
     # create empty best_match_list
