@@ -1,7 +1,6 @@
-Write a function to combine database records into a single list (could be on server side)
 
 Decide on bot design
 Remove codenames_words.txt. Words should be in settings file in hello_mongo repo.
 
-
+Write frontend "decider"
 
