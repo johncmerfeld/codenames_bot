@@ -41,7 +41,7 @@ def best_connecting_word(base1, base2):
                 client,
                 settings.MONGO_DATABASE,
                 settings.collection,
-                text=base1,
+                text=base2,
                 type=type,
                 pos=pos,
             )
