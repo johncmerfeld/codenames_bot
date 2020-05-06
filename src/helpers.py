@@ -2,6 +2,15 @@
 
 """
 Helper functions to assist with development
+
+Example usage:
+
+import settings
+import helpers
+
+client = helpers.get_mongo_client(settings.MONGO_CLUSTER, settings.MONGO_DATABASE, settings.MONGO_USER, settings.MONGO_PASSWORD)
+helpers.get_document(client, settings.MONGO_DATABASE, settings.collection_max, text='blood')
+
 """
 import ssl
 
@@ -17,11 +26,11 @@ def get_mongo_client(cluster, database, user, password):
     )
 
 
-def get_document(client, database, collection, text, type, pos):
+def get_document(client, database, collection, **kwargs):
     """Get document from collection"""
 
     db = client[database]
-    return db[collection].find_one({"text": text, "type": type, "pos": pos})
+    return db[collection].find_one(kwargs)
 
 
 def get_document_generator(client, database, collection):
