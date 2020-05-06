@@ -7,7 +7,7 @@ import itertools
 import cluebot
 cluebot.best_connecting_word('blood', 'hood')
 
-cluebot.best_clue(['Drill', 'Lemon', 'Slip', 'Date'])
+cluebot.best_clue(['Drill', 'Lemon', 'Slip'])
 
 """
 
