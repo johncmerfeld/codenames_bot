@@ -1,6 +1,5 @@
 
-Decide on bot design
-Remove codenames_words.txt. Words should be in settings file in hello_mongo repo.
+Take a fresh look at connecting word algorithm (multiplication might not be sensitive enough); maybe sum of logs?
 
 Write frontend "decider"
   - Consider returning top N words to user
