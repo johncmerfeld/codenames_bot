@@ -52,4 +52,4 @@ if __name__ == "__main__":
         documents_to_write.append(document)
 
     with open(args.output, "w") as f:
-        json.dump(documents_to_write, f, default=str)
+        json.dump(documents_to_write, f, default=str, indent=4, sort_keys=True)
