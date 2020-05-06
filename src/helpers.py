@@ -9,7 +9,7 @@ import settings
 import helpers
 
 client = helpers.get_mongo_client(settings.MONGO_CLUSTER, settings.MONGO_DATABASE, settings.MONGO_USER, settings.MONGO_PASSWORD)
-helpers.get_document(client, settings.MONGO_DATABASE, settings.collection_max, text='blood')
+helpers.get_document(client, settings.MONGO_DATABASE, settings.collection, text='blood')
 
 """
 import ssl
