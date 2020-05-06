@@ -34,9 +34,7 @@ def get_document(client, database, collection, **kwargs):
 
 
 def get_document_generator(client, database, collection):
-    """
-    Get generator that yields documents in collection
-    """
+    """Get generator that yields documents in collection"""
 
     db = client[database]
     for document in db[collection].find():
