@@ -33,7 +33,7 @@ if __name__ == "__main__":
         dest="output",
         required=False,
         default="test.json",
-        help="Collection to write",
+        help="Output file",
     )
 
     args = parser.parse_args()
