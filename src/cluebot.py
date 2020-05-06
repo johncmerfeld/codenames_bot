@@ -38,7 +38,7 @@ def get_best_connecting_word(client, database, collection, base1, base2):
 
     match_list = get_match_list(entry1, entry2)
 
-    return best_match(match_list)
+    return get_best_match(match_list)
 
 
 def get_match_list(entry1, entry2):
@@ -55,7 +55,7 @@ def get_match_list(entry1, entry2):
     return match_list
 
 
-def best_match(match_list):
+def get_best_match(match_list):
     """Get match with highest score"""
 
     best_score = 0
@@ -92,4 +92,4 @@ def get_best_clue(client, database, collection, word_list, k=2):
             }
         )
 
-    return best_match(best_match_list)
+    return get_best_match(best_match_list)
