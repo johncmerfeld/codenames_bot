@@ -3,4 +3,4 @@ Take a fresh look at connecting word algorithm (multiplication might not be sens
 
 Write frontend "decider"
   - Consider returning top N words to user
-  - Add support for multiple base word inputs
+  - Add support for avoiding the assassin!
