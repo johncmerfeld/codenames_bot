@@ -37,24 +37,28 @@ class Cluebot:
     def get_best_connecting_word(client,
                                  database,
                                  collection,
-                                 base1,
-                                 base2,
+                                 word_list,
                                  algorithm):
         """Get the word that best connects the pair of base words"""
 
         # print(f"Matching {base1} and {base2}...")
 
-        entry1 = helpers.get_document(client, database, collection, text=base1)
-        entry2 = helpers.get_document(client, database, collection, text=base2)
+        entry_list = []
+        for word in word_list:
+            entry_list.append(
+                helpers.get_document(client, database, collection, text=base1)
+            )
 
-        match_list = Cluebot.get_match_list(entry1, entry2, algorithm)
+        match_list = Cluebot.get_match_list(entry_list, algorithm)
 
         # TODO need to account for rules against parts of words...
         return Cluebot.get_best_match(match_list)
 
     @staticmethod
-    def get_match_list(entry1, entry2, algorithm):
+    def get_match_list(entry_list, algorithm):
         """Get list of matches for pair of entry words"""
+
+        # TODO: Might need recursion for this!
 
         match_list = []
         for word1, weight1 in entry1["weights"].items():
