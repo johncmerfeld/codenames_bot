@@ -57,10 +57,10 @@ class Game:
         for word in words:
             helpers.get_document(self.client, self.database, self.collection, text=word)
 
-            # the point is that this method should inherent client, database and collection
-            # and also know the state of the game
             # do a bunch of other stuff here
             # remember to avoid other team and assassin
+            # the point is that this method should inherent client, database and collection
+            # and also know the state of the game
 
         return []
 
