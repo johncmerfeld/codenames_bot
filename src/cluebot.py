@@ -18,8 +18,14 @@ client = helpers.get_mongo_client( \
 cluebot = Cluebot(client, settings.MONGO_DATABASE, settings.collection)
 
 # will be phased out as outward-facing function
-print(cluebot.get_best_clue(['Iron', 'Lemon', 'Fair']))
-print(cluebot.get_best_clue(['Iron', 'Lemon', 'Fair'], algorithm="product_of_weights"))
+# print(cluebot.get_best_clue(['Iron', 'Lemon', 'Fair']))
+# print(cluebot.get_best_clue(['Iron', 'Lemon', 'Fair'], algorithm="product_of_weights"))
+
+print(cluebot.get_best_clue(['Iron', 'Slip', 'Tablet', 'Court'], k=2, algorithm="product_of_weights"))
+# sometimes cluebot can find a link
+print(cluebot.get_best_clue(['Iron', 'Slip', 'Tablet', 'Court'], k=3, algorithm="product_of_weights"))
+# sometimes it can't
+print(cluebot.get_best_clue(['Iron', 'Lemon', 'Date', 'Court'], k=3, algorithm="product_of_weights"))
 
 """
 
@@ -46,7 +52,7 @@ class Cluebot:
         entry_list = []
         for word in word_list:
             entry_list.append(
-                helpers.get_document(client, database, collection, text=base1)
+                helpers.get_document(client, database, collection, text=word)
             )
 
         match_list = Cluebot.get_match_list(entry_list, algorithm)
@@ -56,24 +62,45 @@ class Cluebot:
 
     @staticmethod
     def get_match_list(entry_list, algorithm):
-        """Get list of matches for pair of entry words"""
+        return Cluebot.get_match_list_recursive(entry_list, algorithm, len(entry_list))
 
-        # TODO: Might need recursion for this!
+    @staticmethod
+    def get_match_list_recursive(entry_list, algorithm, n):
+        if n == 2:
+            match_list = []
+            entry1 = entry_list[0]
+            entry2 = entry_list[1]
+            for word1, weight1 in entry1["weights"].items():
+                for word2, weight2 in entry2["weights"].items():
+                    if word1 == word2:
+                        if algorithm == "product_of_squares":
+                            score = (weight1 ** 2) * (weight2 ** 2) / 1000000
+                        elif algorithm == "product_of_weights":
+                            score = (weight1 * weight2) / 100
+                        else:
+                            score = 0
+                        # print(f"{word1} is a match with score of {score}")
+                        match_list.append({"word": word1, "score": score})
 
-        match_list = []
-        for word1, weight1 in entry1["weights"].items():
-            for word2, weight2 in entry2["weights"].items():
-                if word1 == word2:
-                    if algorithm == "product_of_squares":
-                        score = (weight1 ** 2) * (weight2 ** 2) / 1000000
-                    elif algorithm == "product_of_weights":
-                        score = (weight1 * weight2) / 100
-                    else:
-                        score = 0
-                    # print(f"{word1} is a match with score of {score}")
-                    match_list.append({"word": word1, "score": score})
-
-        return match_list
+            return match_list
+        else:
+            match_list = Cluebot.get_match_list_recursive(
+                entry_list, algorithm, n - 1
+            )
+            match_listN = []
+            entryN = entry_list[n - 1]
+            for wordN, weightN in entryN["weights"].items():
+                for match in match_list:
+                    if wordN == match['word']:
+                        if algorithm == "product_of_squares":
+                            score = (weightN ** 2) * (match['score'] ** 2) / 1000000
+                        elif algorithm == "product_of_weights":
+                            score = (weightN * match['score']) / 100
+                        else:
+                            score = 0
+                        # print(f"{word1} is a match with score of {score}")
+                        match_listN.append({"word": wordN, "score": score})
+            return match_listN
 
     @staticmethod
     def get_best_match(match_list):
@@ -94,19 +121,21 @@ class Cluebot:
         # create empty best_match_list
         best_match_list = []
         # for each pair of words in word_list:
-        for pair in itertools.combinations(word_list, k):
-            word1 = pair[0]
-            word2 = pair[1]
+        for word_group in itertools.combinations(word_list, k):
             # get best_match and the overlap score
             connection = Cluebot.get_best_connecting_word(
-                self.client, self.database, self.collection, word1, word2, algorithm
+                self.client, self.database, self.collection, word_group, algorithm
             )
 
+
+            if not connection:
+                print(f"There is no {k}-word match in the group {word_list}")
+                return
+
             # add the base words, the match word, and the score to best_match_list
-            best_match_list.append(
+            else: best_match_list.append(
                 {
-                    "word1": word1,
-                    "word2": word2,
+                    "words": word_group,
                     "connector": connection["word"],
                     "score": connection["score"],
                 }
