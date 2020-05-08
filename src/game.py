@@ -18,10 +18,15 @@ class Game:
         self.collection = collection
         self.words_by_team = words_by_team
 
+    def get_valid_teams(self):
+        """Get the set of valid teams"""
+
+        return list(self.words_by_team.keys())
+
     def validate_team(self, team):
         """Validate team input variable"""
 
-        valid_teams = list(self.words_by_team.keys())
+        valid_teams = self.get_valid_teams()
         valid_teams_string = ", ".join(valid_teams)
 
         if team not in valid_teams:
@@ -70,26 +75,39 @@ class Game:
                         team_words.remove(word)
                         print(f"{word} removed from {team}")
 
-    def get_best_connecting_words(self, words):
-        """Get best connecting words. This is work in progress!"""
+    def get_best_connecting_words(self, words_to_connect, words_to_avoid):
+        """Get best connecting words"""
 
-        for word in words:
-            helpers.get_document(self.client, self.database, self.collection, text=word)
+        all_items = {}
 
-            # do a bunch of other stuff here
-            # remember to avoid other team and assassin
-            # the point is that this method should inherent client, database and collection
-            # and also know the state of the game
+        for word in words_to_connect:
+            document = helpers.get_document(
+                self.client, self.database, self.collection, text=word
+            )
+            for item, weight in document["weights"].items():
+                if item not in words_to_avoid:
+                    if item in all_items:
+                        all_items[item]["count"] += 1
+                        all_items[item]["product_of_squares"] *= weight ** 2
+                    else:
+                        all_items[item] = {}
+                        all_items[item]["count"] = 1
+                        all_items[item]["product_of_squares"] = weight ** 2
 
-        return []
+        return all_items
 
     def give_clue(self, team):
-        """Give clue for team read or blue"""
+        """Give clue for team"""
 
         if self.validate_team(team):
-            words = self.get_words(team)
+            words_to_connect = self.get_words(team)
+            words_to_avoid = []
+            for valid_team in self.get_valid_teams():
+                if valid_team != team:
+                    for word in self.get_words(valid_team):
+                        words_to_avoid.append(word)
 
-        return self.get_best_connecting_words(words)
+        return self.get_best_connecting_words(words_to_connect, words_to_avoid)
 
 
 client = helpers.get_mongo_client(
