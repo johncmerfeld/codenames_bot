@@ -75,7 +75,9 @@ class Game:
                         team_words.remove(word)
                         print(f"{word} removed from {team}")
 
-    def get_best_connecting_words(self, words_to_connect, words_to_avoid):
+    def get_best_connecting_words(
+        self, words_to_connect, words_to_avoid, clues_to_give
+    ):
         """Get best connecting words"""
 
         all_items = {}
@@ -89,15 +91,17 @@ class Game:
                     if item in all_items:
                         all_items[item]["count"] += 1
                         all_items[item]["product_of_squares"] *= weight ** 2
+                        all_items[item]["words_to_connect"].append(word)
                     else:
                         all_items[item] = {}
                         all_items[item]["count"] = 1
                         all_items[item]["product_of_squares"] = weight ** 2
+                        all_items[item]["words_to_connect"] = [word]
 
-        return all_items
+        return helpers.get_top_items(all_items, clues_to_give)
 
-    def give_clue(self, team):
-        """Give clue for team"""
+    def give_clue(self, team, clues_to_give=3):
+        """Give clues for team"""
 
         if self.validate_team(team):
             words_to_connect = self.get_words(team)
@@ -107,7 +111,11 @@ class Game:
                     for word in self.get_words(valid_team):
                         words_to_avoid.append(word)
 
-        return self.get_best_connecting_words(words_to_connect, words_to_avoid)
+        best_connecting_words = self.get_best_connecting_words(
+            words_to_connect, words_to_avoid, clues_to_give
+        )
+
+        return helpers.beautify_clues(best_connecting_words)
 
 
 client = helpers.get_mongo_client(
@@ -126,7 +134,7 @@ words_by_team = {
 game = Game(client, settings.MONGO_DATABASE, settings.collection, words_by_team)
 
 print(game.get_words("red"))
-game.remove_words(("Lemon", "Fair"))
+game.remove_words("Fair")
 print(game.get_words("red"))
 game.add_words("Spring", "red")
 print(game.get_words("red"))
