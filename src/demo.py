@@ -18,7 +18,7 @@ if __name__ == "__main__":
     words_by_team = {
         "red": ["Fair", "Fish", "Dinosaur"],
         "blue": ["Drill", "Hollywood"],
-        "assassin": ["Foot"],
+        "assassin": ["Turkey"],
     }
 
     my_game = game.Game(
@@ -28,6 +28,6 @@ if __name__ == "__main__":
     print(my_game.get_words("red"))
     my_game.remove_words("Fair")
     print(my_game.get_words("red"))
-    my_game.add_words("Turkey", "red")
+    my_game.add_words("Foot", "red")
     print(my_game.get_words("red"))
     print(my_game.give_clues("red", 5))

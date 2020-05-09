@@ -99,7 +99,6 @@ class Game:
                     data[item]["words_to_avoid_matches"] = []
 
         for word in words_to_avoid:
-            print(word)
             document = helpers.get_document(
                 self.client, self.database, self.collection, text=word
             )
