@@ -1,6 +1,4 @@
-
-Take a fresh look at connecting word algorithm (multiplication might not be sensitive enough); maybe sum of logs?
-
-Write frontend "decider"
-  - Consider returning top N words to user
-  - Add support for avoiding the assassin!
+Consider pulling from another API. We're heavy on associations and not enough on descriptors
+Need to add neutral words
+Need to skip unknown words. Currently we bomb if no words found from API
+Finalize class structure
