@@ -80,7 +80,7 @@ class Game:
                         print(f"{word} removed from {team}")
 
     def get_clues(self, words_to_connect, words_to_avoid, clues_to_give):
-        """Get best connecting words"""
+        """Get clues from words to connect and words to avoid"""
 
         data = {}
 
