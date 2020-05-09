@@ -87,18 +87,25 @@ class Game:
                 self.client, self.database, self.collection, text=word
             )
             for item, weight in document["weights"].items():
-                # we only consider the avoid words themselves!
-                # we need to consider the words associated with the avoid words
-                if item not in words_to_avoid:
-                    if item in data:
-                        data[item]["count"] += 1
-                        data[item]["product_of_squares"] *= weight ** 2
-                        data[item]["matched_with"].append(word)
-                    else:
-                        data[item] = {}
-                        data[item]["count"] = 1
-                        data[item]["product_of_squares"] = weight ** 2
-                        data[item]["matched_with"] = [word]
+                if item in data:
+                    data[item]["count"] += 1
+                    data[item]["product_of_squares"] *= weight ** 2
+                    data[item]["words_to_connect_matches"].append(word)
+                else:
+                    data[item] = {}
+                    data[item]["count"] = 1
+                    data[item]["product_of_squares"] = weight ** 2
+                    data[item]["words_to_connect_matches"] = [word]
+                    data[item]["words_to_avoid_matches"] = []
+
+        for word in words_to_avoid:
+            print(word)
+            document = helpers.get_document(
+                self.client, self.database, self.collection, text=word
+            )
+            for item, weight in document["weights"].items():
+                if item in data:
+                    data[item]["words_to_avoid_matches"] = [word]
 
         df = pd.DataFrame(data)
         df = df.transpose()
