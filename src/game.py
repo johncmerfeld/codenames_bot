@@ -1,9 +1,8 @@
 #! /usr/bin/env python3
 
 """
-Just run the script:
-
-python3 game.py
+Class to play the game
+Check it out by running demo.py script
 """
 
 import json
@@ -11,7 +10,6 @@ import json
 import pandas as pd
 
 import helpers
-import settings
 
 
 class Game:
@@ -124,26 +122,3 @@ class Game:
         clues = self.get_clues(words_to_connect, words_to_avoid, clues_to_give)
 
         return json.dumps(clues, indent=4)
-
-
-client = helpers.get_mongo_client(
-    settings.MONGO_CLUSTER,
-    settings.MONGO_DATABASE,
-    settings.MONGO_USER,
-    settings.MONGO_PASSWORD,
-)
-
-words_by_team = {
-    "red": ["Fair", "Fish", "Dinosaur"],
-    "blue": ["Drill", "Hollywood"],
-    "assassin": "Foot",
-}
-
-game = Game(client, settings.MONGO_DATABASE, settings.collection, words_by_team)
-
-print(game.get_words("red"))
-game.remove_words("Fair")
-print(game.get_words("red"))
-game.add_words("Turkey", "red")
-print(game.get_words("red"))
-print(game.give_clues("red"))
