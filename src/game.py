@@ -6,6 +6,10 @@ Just run the script:
 python3 game.py
 """
 
+import json
+
+import pandas as pd
+
 import helpers
 import settings
 
@@ -75,12 +79,10 @@ class Game:
                         team_words.remove(word)
                         print(f"{word} removed from {team}")
 
-    def get_best_connecting_words(
-        self, words_to_connect, words_to_avoid, clues_to_give
-    ):
+    def get_clues(self, words_to_connect, words_to_avoid, clues_to_give):
         """Get best connecting words"""
 
-        all_items = {}
+        data = {}
 
         for word in words_to_connect:
             document = helpers.get_document(
@@ -88,19 +90,25 @@ class Game:
             )
             for item, weight in document["weights"].items():
                 if item not in words_to_avoid:
-                    if item in all_items:
-                        all_items[item]["count"] += 1
-                        all_items[item]["product_of_squares"] *= weight ** 2
-                        all_items[item]["words_to_connect"].append(word)
+                    if item in data:
+                        data[item]["count"] += 1
+                        data[item]["product_of_squares"] *= weight ** 2
+                        data[item]["matched_with"].append(word)
                     else:
-                        all_items[item] = {}
-                        all_items[item]["count"] = 1
-                        all_items[item]["product_of_squares"] = weight ** 2
-                        all_items[item]["words_to_connect"] = [word]
+                        data[item] = {}
+                        data[item]["count"] = 1
+                        data[item]["product_of_squares"] = weight ** 2
+                        data[item]["matched_with"] = [word]
 
-        return helpers.get_top_items(all_items, clues_to_give)
+        df = pd.DataFrame(data)
+        df = df.transpose()
+        # product_of_squares is dtype object so we need to convert it to int
+        df["product_of_squares"] = df["product_of_squares"].astype("int")
+        df = df.nlargest(clues_to_give, "product_of_squares")
 
-    def give_clue(self, team, clues_to_give=3):
+        return df.to_dict("index")
+
+    def give_clues(self, team, clues_to_give=3):
         """Give clues for team"""
 
         if self.validate_team(team):
@@ -111,11 +119,9 @@ class Game:
                     for word in self.get_words(valid_team):
                         words_to_avoid.append(word)
 
-        best_connecting_words = self.get_best_connecting_words(
-            words_to_connect, words_to_avoid, clues_to_give
-        )
+        clues = self.get_clues(words_to_connect, words_to_avoid, clues_to_give)
 
-        return helpers.beautify_clues(best_connecting_words)
+        return json.dumps(clues, indent=4)
 
 
 client = helpers.get_mongo_client(
@@ -126,7 +132,7 @@ client = helpers.get_mongo_client(
 )
 
 words_by_team = {
-    "red": ["Iron", "Lemon", "Fair"],
+    "red": ["Fair", "Fish", "Dinosaur"],
     "blue": ["Drill", "Hollywood"],
     "assassin": "Foot",
 }
@@ -136,6 +142,6 @@ game = Game(client, settings.MONGO_DATABASE, settings.collection, words_by_team)
 print(game.get_words("red"))
 game.remove_words("Fair")
 print(game.get_words("red"))
-game.add_words("Spring", "red")
+game.add_words("Turkey", "red")
 print(game.get_words("red"))
-print(game.give_clue("red"))
+print(game.give_clues("red"))
