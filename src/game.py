@@ -89,6 +89,8 @@ class Game:
                 self.client, self.database, self.collection, text=word
             )
             for item, weight in document["weights"].items():
+                # we only consider the avoid words themselves!
+                # we need to consider the words associated with the avoid words
                 if item not in words_to_avoid:
                     if item in data:
                         data[item]["count"] += 1
