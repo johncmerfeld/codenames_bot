@@ -78,15 +78,19 @@ class Game:
                         print(f"{word} removed from {team}")
 
     def get_clues(
-        self,
-        words_to_connect,
-        words_to_avoid,
-        clues_to_give,
-        metric,
-        take_risk,
-        clue_type,
+        self, words_to_connect, words_to_avoid, clues_to_give, metric, clue_type,
     ):
-        """Get clues from words to connect and words to avoid"""
+        """
+        Get clues
+
+        words_to_connect: words to connect
+        words_to_avoid: words to avoid
+        clues_to_give: number of clues to give
+        metric: metric for which to optimize
+        clue_type: stimulus or response
+
+        Returns clues as dictionary
+        """
 
         valid_metrics = ("count", "sum", "product", "product_of_squares")
         valid_metrics_string = ", ".join(valid_metrics)
@@ -123,7 +127,6 @@ class Game:
                             data[item]["words_to_connect_matches"] = [
                                 f"{word}: {weight}"
                             ]
-                            data[item]["is_safe"] = True
                             data[item]["words_to_avoid_matches"] = []
             else:
                 print(f"{word} not found in {self.collection}")
@@ -135,17 +138,14 @@ class Game:
             if document:
                 for item_dct in document["items"]:
                     item = item_dct["item"]
+                    weight = item_dct["weight"]
                     if item in data:
-                        data[item]["is_safe"] = False
                         data[item]["words_to_avoid_matches"].append(f"{word}: {weight}")
             else:
                 print(f"{word} not found in {self.collection}")
 
             df = pd.DataFrame(data)
             df = df.transpose()
-
-            if not take_risk:
-                df = df[df["is_safe"]]
 
             try:
                 # metrics are stored as dtype objects so we need to convert them
@@ -160,14 +160,18 @@ class Game:
                 )
 
     def give_clues(
-        self,
-        team,
-        clues_to_give=3,
-        metric="product_of_squares",
-        take_risk=True,
-        clue_type="stimulus",
+        self, team, clues_to_give=3, metric="product_of_squares", clue_type="stimulus",
     ):
-        """Give clues for team"""
+        """
+        Give clues
+
+        team: team for which to give clues
+        clues_to_give: number of clues to give
+        metric: metric for which to optimize
+        clue_type: stimulus or response
+
+        Returns clues as formatted dictionary
+        """
 
         if self.validate_team(team):
             words_to_connect = self.get_words(team)
@@ -178,12 +182,7 @@ class Game:
                         words_to_avoid.append(word)
 
         clues = self.get_clues(
-            words_to_connect,
-            words_to_avoid,
-            clues_to_give,
-            metric,
-            take_risk,
-            clue_type,
+            words_to_connect, words_to_avoid, clues_to_give, metric, clue_type,
         )
 
         return json.dumps(clues, indent=4)
