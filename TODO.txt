@@ -1,4 +1,5 @@
 Probably should make all words lowercase
-Finalize class structure. Do we need bot class? 
+Finalize class structure. Do we need bot class?
 Add tests
 Consider pulling from another API
+Need to add intelligence for different risk levels

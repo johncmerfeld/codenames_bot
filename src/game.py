@@ -84,6 +84,7 @@ class Game:
         clues_to_give,
         metric,
         clue_type,
+        minimum_weight,
         take_risk,
     ):
         """
@@ -94,6 +95,7 @@ class Game:
         clues_to_give: number of clues to give
         metric: metric for which to optimize
         clue_type: stimulus or response
+        minimum_weight: weight under which to ignore connecting words
         take_risk: if True, return clues that also match with words to avoid
 
         Returns clues as dictionary
@@ -114,6 +116,7 @@ class Game:
                     if (
                         item.lower() not in word_to_connect.lower()
                         and word_to_connect.lower() not in item.lower()
+                        and weight >= minimum_weight
                     ):
                         if item in data:
                             data[item]["count"] += 1
@@ -180,7 +183,8 @@ class Game:
         clues_to_give=3,
         metric="product_of_squares",
         clue_type="stimulus",
-        take_risk=False,
+        minimum_weight=30,
+        take_risk=True,
     ):
         """
         Give clues
@@ -189,6 +193,7 @@ class Game:
         clues_to_give: number of clues to give
         metric: metric for which to optimize
         clue_type: stimulus or response
+        minimum_weight: weight under which to ignore connecting words
         take_risk: if True, return clues that also match with words to avoid
 
         Returns clues as formatted dictionary
@@ -208,6 +213,7 @@ class Game:
             clues_to_give,
             metric,
             clue_type,
+            minimum_weight,
             take_risk,
         )
 
