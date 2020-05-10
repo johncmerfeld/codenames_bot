@@ -19,12 +19,31 @@ if __name__ == "__main__":
     )
 
     words_by_team = {
-        "red": ["Port", "Bear", "Platypus", "Africa", "Comic"],
-        "blue": ["Knight", "Part", "Ship", "Pumpkin"],
-        "nuetral": ["Tower", "Maple", "Space", "Pool", "Flute", "Cotton", "France"],
-        "assassin": ["Row"],
+        "red": [
+            "Link",
+            "Angel",
+            "England",
+            "Bugle",
+            "Cell",
+            "Penguin",
+            "Greece",
+            "Trip",
+            "Hook",
+        ],
+        "blue": [
+            "Palm",
+            "Tower",
+            "Crash",
+            "Scuba Diver",
+            "Comic",
+            "Ice Cream",
+            "Litter",
+            "Water",
+        ],
+        "nuetral": ["Yard", "Pyramid", "Battery", "Log", "Australia", "Ice", "Disease"],
+        "assassin": ["Pistol"],
     }
 
     g = game.Game(client, settings.MONGO_DATABASE, settings.collection, words_by_team)
 
-    print(g.give_clues("blue"))
+    print(g.give_clues("red"))
