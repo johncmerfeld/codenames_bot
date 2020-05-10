@@ -8,4 +8,4 @@ MONGO_DATABASE = os.getenv("MONGO_DATABASE")
 MONGO_USER = os.getenv("MONGO_USER")
 MONGO_PASSWORD = os.getenv("MONGO_PASSWORD")
 
-collection = "words_clean"
+collection = "words_clean_max"

@@ -78,7 +78,13 @@ class Game:
                         print(f"{word} removed from {team}")
 
     def get_clues(
-        self, words_to_connect, words_to_avoid, clues_to_give, metric, clue_type,
+        self,
+        words_to_connect,
+        words_to_avoid,
+        clues_to_give,
+        metric,
+        clue_type,
+        take_risk,
     ):
         """
         Get clues
@@ -88,24 +94,26 @@ class Game:
         clues_to_give: number of clues to give
         metric: metric for which to optimize
         clue_type: stimulus or response
+        take_risk: if True, return clues that also match with words to avoid
 
         Returns clues as dictionary
         """
 
         data = {}
 
-        for word in words_to_connect:
+        for word_to_connect in words_to_connect:
             document = helpers.get_document(
-                self.client, self.database, self.collection, text=word, type=clue_type,
+                self.client,
+                self.database,
+                self.collection,
+                text_type=f"{word_to_connect}_{clue_type}",
             )
             if document:
-                for item_dct in document["items"]:
-                    item = item_dct["item"]
-                    weight = item_dct["weight"]
+                for item, weight in document["items"].items():
                     # we don't want Drilling returned as a word associated with Drill
                     if (
-                        item.lower() not in word.lower()
-                        and word.lower() not in item.lower()
+                        item.lower() not in word_to_connect.lower()
+                        and word_to_connect.lower() not in item.lower()
                     ):
                         if item in data:
                             data[item]["count"] += 1
@@ -113,7 +121,7 @@ class Game:
                             data[item]["product"] *= weight
                             data[item]["product_of_squares"] *= weight ** 2
                             data[item]["words_to_connect_matches"].append(
-                                f"{word}: {weight}"
+                                f"{word_to_connect}: {weight}"
                             )
                         else:
                             data[item] = {}
@@ -122,44 +130,57 @@ class Game:
                             data[item]["product"] = weight
                             data[item]["product_of_squares"] = weight ** 2
                             data[item]["words_to_connect_matches"] = [
-                                f"{word}: {weight}"
+                                f"{word_to_connect}: {weight}"
                             ]
                             data[item]["words_to_avoid_matches"] = []
+                            data[item]["is_risk_free"] = True
             else:
-                print(f"{word} not found in {self.collection}")
+                print(f"{word_to_connect}_{clue_type} not found in {self.collection}")
 
-        for word in words_to_avoid:
+        for word_to_avoid in words_to_avoid:
             document = helpers.get_document(
-                self.client, self.database, self.collection, text=word
+                self.client,
+                self.database,
+                self.collection,
+                text_type=f"{word_to_connect}_{clue_type}",
             )
             if document:
-                for item_dct in document["items"]:
-                    item = item_dct["item"]
-                    weight = item_dct["weight"]
+                for item, weight in document["items"].items():
                     if item in data:
-                        data[item]["words_to_avoid_matches"].append(f"{word}: {weight}")
+                        data[item]["words_to_avoid_matches"].append(
+                            f"{word_to_avoid}: {weight}"
+                        )
+                        data[item]["is_risk_free"] = False
             else:
-                print(f"{word} not found in {self.collection}")
+                print(f"{word_to_avoid}_{clue_type} not found in {self.collection}")
 
-            df = pd.DataFrame(data)
-            df = df.transpose()
+        df = pd.DataFrame(data)
+        df = df.transpose()
 
-            try:
-                # metrics are stored as dtype objects so we need to convert them
-                df[metric] = df[metric].astype("int")
-                df = df.nlargest(clues_to_give, metric)
+        if not take_risk:
+            df = df[df["is_risk_free"]]
 
-                return df.to_dict("index")
+        try:
+            # metrics are stored as dtype objects so we need to convert them
+            df[metric] = df[metric].astype("int")
+            df = df.nlargest(clues_to_give, metric)
 
-            except KeyError:
-                valid_metrics = ("count", "sum", "product", "product_of_squares")
-                valid_metrics_string = ", ".join(valid_metrics)
-                raise Exception(
-                    f"{metric} is not a valid metric. Expecting {valid_metrics_string}"
-                )
+            return df.to_dict("index")
+
+        except KeyError:
+            valid_metrics = ("count", "sum", "product", "product_of_squares")
+            valid_metrics_string = ", ".join(valid_metrics)
+            raise Exception(
+                f"{metric} is not a valid metric. Expecting {valid_metrics_string}"
+            )
 
     def give_clues(
-        self, team, clues_to_give=3, metric="product_of_squares", clue_type="stimulus",
+        self,
+        team,
+        clues_to_give=3,
+        metric="product_of_squares",
+        clue_type="stimulus",
+        take_risk=False,
     ):
         """
         Give clues
@@ -168,6 +189,7 @@ class Game:
         clues_to_give: number of clues to give
         metric: metric for which to optimize
         clue_type: stimulus or response
+        take_risk: if True, return clues that also match with words to avoid
 
         Returns clues as formatted dictionary
         """
@@ -181,7 +203,12 @@ class Game:
                         words_to_avoid.append(word)
 
         clues = self.get_clues(
-            words_to_connect, words_to_avoid, clues_to_give, metric, clue_type,
+            words_to_connect,
+            words_to_avoid,
+            clues_to_give,
+            metric,
+            clue_type,
+            take_risk,
         )
 
         return json.dumps(clues, indent=4)
