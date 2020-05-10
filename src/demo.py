@@ -27,4 +27,4 @@ if __name__ == "__main__":
 
     g = game.Game(client, settings.MONGO_DATABASE, settings.collection, words_by_team)
 
-    print(g.give_clues("blue", clues_to_give=5, take_risk=True))
+    print(g.give_clues("red"))

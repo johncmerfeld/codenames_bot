@@ -84,7 +84,6 @@ class Game:
         clues_to_give,
         metric,
         take_risk,
-        weight_minimum,
         clue_type,
     ):
         """Get clues from words to connect and words to avoid"""
@@ -92,81 +91,73 @@ class Game:
         valid_metrics = ("count", "sum", "product", "product_of_squares")
         valid_metrics_string = ", ".join(valid_metrics)
 
-        if metric not in valid_metrics:
-            raise Exception(
-                f"{metric} is not a valid metric. Expecting {valid_metrics_string}"
+        data = {}
+
+        for word in words_to_connect:
+            document = helpers.get_document(
+                self.client, self.database, self.collection, text=word, type=clue_type,
             )
-        else:
-
-            data = {}
-
-            for word in words_to_connect:
-                document = helpers.get_document(
-                    self.client,
-                    self.database,
-                    self.collection,
-                    text=word,
-                    type=clue_type,
-                )
-                if document:
-                    for item_dct in document["items"]:
-                        item = item_dct["item"]
-                        weight = item_dct["weight"]
-                        # we don't want Drilling returned as a word associated with Drill
-                        if (
-                            not item.startswith(word)
-                            and not word.startswith(item)
-                            and weight >= weight_minimum
-                        ):
-                            if item in data:
-                                data[item]["count"] += 1
-                                data[item]["sum"] += weight
-                                data[item]["product"] *= weight
-                                data[item]["product_of_squares"] *= weight ** 2
-                                data[item]["words_to_connect_matches"].append(
-                                    f"{word}: {weight}"
-                                )
-                            else:
-                                data[item] = {}
-                                data[item]["count"] = 1
-                                data[item]["sum"] = weight
-                                data[item]["product"] = weight
-                                data[item]["product_of_squares"] = weight ** 2
-                                data[item]["words_to_connect_matches"] = [
-                                    f"{word}: {weight}"
-                                ]
-                                data[item]["is_safe"] = True
-                                data[item]["words_to_avoid_matches"] = []
-                else:
-                    print(f"{word} not found in {self.collection}")
-
-            for word in words_to_avoid:
-                document = helpers.get_document(
-                    self.client, self.database, self.collection, text=word
-                )
-                if document:
-                    for item_dct in document["items"]:
-                        item = item_dct["item"]
+            if document:
+                for item_dct in document["items"]:
+                    item = item_dct["item"]
+                    weight = item_dct["weight"]
+                    # we don't want Drilling returned as a word associated with Drill
+                    if (
+                        item.lower() not in word.lower()
+                        and word.lower() not in item.lower()
+                    ):
                         if item in data:
-                            data[item]["is_safe"] = False
-                            data[item]["words_to_avoid_matches"].append(
+                            data[item]["count"] += 1
+                            data[item]["sum"] += weight
+                            data[item]["product"] *= weight
+                            data[item]["product_of_squares"] *= weight ** 2
+                            data[item]["words_to_connect_matches"].append(
                                 f"{word}: {weight}"
                             )
-                else:
-                    print(f"{word} not found in {self.collection}")
+                        else:
+                            data[item] = {}
+                            data[item]["count"] = 1
+                            data[item]["sum"] = weight
+                            data[item]["product"] = weight
+                            data[item]["product_of_squares"] = weight ** 2
+                            data[item]["words_to_connect_matches"] = [
+                                f"{word}: {weight}"
+                            ]
+                            data[item]["is_safe"] = True
+                            data[item]["words_to_avoid_matches"] = []
+            else:
+                print(f"{word} not found in {self.collection}")
+
+        for word in words_to_avoid:
+            document = helpers.get_document(
+                self.client, self.database, self.collection, text=word
+            )
+            if document:
+                for item_dct in document["items"]:
+                    item = item_dct["item"]
+                    if item in data:
+                        data[item]["is_safe"] = False
+                        data[item]["words_to_avoid_matches"].append(f"{word}: {weight}")
+            else:
+                print(f"{word} not found in {self.collection}")
 
             df = pd.DataFrame(data)
             df = df.transpose()
 
-            # only take items with no matches in words to avoid list
             if not take_risk:
                 df = df[df["is_safe"]]
 
-            # metrics are stored as dtype objects so we need to convert them
-            df[metric] = df[metric].astype("int")
-            df = df.nlargest(clues_to_give, metric)
+            try:
+                # metrics are stored as dtype objects so we need to convert them
+                df[metric] = df[metric].astype("int")
+                df = df.nlargest(clues_to_give, metric)
 
-            return df.to_dict("index")
+                return df.to_dict("index")
+
+            except KeyError:
+                raise Exception(
+                    f"{metric} is not a valid metric. Expecting {valid_metrics_string}"
+                )
 
     def give_clues(
         self,
@@ -174,7 +165,6 @@ class Game:
         clues_to_give=3,
         metric="product_of_squares",
         take_risk=True,
-        weight_minimum=0,
         clue_type="stimulus",
     ):
         """Give clues for team"""
@@ -193,7 +183,6 @@ class Game:
             clues_to_give,
             metric,
             take_risk,
-            weight_minimum,
             clue_type,
         )
 
