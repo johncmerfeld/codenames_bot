@@ -77,7 +77,16 @@ class Game:
                         team_words.remove(word)
                         print(f"{word} removed from {team}")
 
-    def get_clues(self, words_to_connect, words_to_avoid, clues_to_give, metric):
+    def get_clues(
+        self,
+        words_to_connect,
+        words_to_avoid,
+        clues_to_give,
+        metric,
+        take_risk,
+        weight_minimum,
+        clue_type,
+    ):
         """Get clues from words to connect and words to avoid"""
 
         valid_metrics = ("count", "sum", "product", "product_of_squares")
@@ -93,36 +102,65 @@ class Game:
 
             for word in words_to_connect:
                 document = helpers.get_document(
-                    self.client, self.database, self.collection, text=word
+                    self.client,
+                    self.database,
+                    self.collection,
+                    text=word,
+                    type=clue_type,
                 )
-                for item, weight in document["weights"].items():
-                    # we don't want Drilling returned as a word associated with Drill
-                    if not item.startswith(word) and not word.startswith(item):
-                        if item in data:
-                            data[item]["count"] += 1
-                            data[item]["sum"] += weight
-                            data[item]["product"] *= weight
-                            data[item]["product_of_squares"] *= weight ** 2
-                            data[item]["words_to_connect_matches"].append(word)
-                        else:
-                            data[item] = {}
-                            data[item]["count"] = 1
-                            data[item]["sum"] = weight
-                            data[item]["product"] = weight
-                            data[item]["product_of_squares"] = weight ** 2
-                            data[item]["words_to_connect_matches"] = [word]
-                            data[item]["words_to_avoid_matches"] = []
+                if document:
+                    for item_dct in document["items"]:
+                        item = item_dct["item"]
+                        weight = item_dct["weight"]
+                        # we don't want Drilling returned as a word associated with Drill
+                        if (
+                            not item.startswith(word)
+                            and not word.startswith(item)
+                            and weight >= weight_minimum
+                        ):
+                            if item in data:
+                                data[item]["count"] += 1
+                                data[item]["sum"] += weight
+                                data[item]["product"] *= weight
+                                data[item]["product_of_squares"] *= weight ** 2
+                                data[item]["words_to_connect_matches"].append(
+                                    f"{word}: {weight}"
+                                )
+                            else:
+                                data[item] = {}
+                                data[item]["count"] = 1
+                                data[item]["sum"] = weight
+                                data[item]["product"] = weight
+                                data[item]["product_of_squares"] = weight ** 2
+                                data[item]["words_to_connect_matches"] = [
+                                    f"{word}: {weight}"
+                                ]
+                                data[item]["is_safe"] = True
+                                data[item]["words_to_avoid_matches"] = []
+                else:
+                    print(f"{word} not found in {self.collection}")
 
             for word in words_to_avoid:
                 document = helpers.get_document(
                     self.client, self.database, self.collection, text=word
                 )
-                for item, weight in document["weights"].items():
-                    if item in data:
-                        data[item]["words_to_avoid_matches"].append(word)
+                if document:
+                    for item_dct in document["items"]:
+                        item = item_dct["item"]
+                        if item in data:
+                            data[item]["is_safe"] = False
+                            data[item]["words_to_avoid_matches"].append(
+                                f"{word}: {weight}"
+                            )
+                else:
+                    print(f"{word} not found in {self.collection}")
 
             df = pd.DataFrame(data)
             df = df.transpose()
+
+            # only take items with no matches in words to avoid list
+            if not take_risk:
+                df = df[df["is_safe"]]
 
             # metrics are stored as dtype objects so we need to convert them
             df[metric] = df[metric].astype("int")
@@ -130,7 +168,15 @@ class Game:
 
             return df.to_dict("index")
 
-    def give_clues(self, team, clues_to_give=3, metric="product_of_squares"):
+    def give_clues(
+        self,
+        team,
+        clues_to_give=3,
+        metric="product_of_squares",
+        take_risk=True,
+        weight_minimum=0,
+        clue_type="stimulus",
+    ):
         """Give clues for team"""
 
         if self.validate_team(team):
@@ -141,6 +187,14 @@ class Game:
                     for word in self.get_words(valid_team):
                         words_to_avoid.append(word)
 
-        clues = self.get_clues(words_to_connect, words_to_avoid, clues_to_give, metric)
+        clues = self.get_clues(
+            words_to_connect,
+            words_to_avoid,
+            clues_to_give,
+            metric,
+            take_risk,
+            weight_minimum,
+            clue_type,
+        )
 
         return json.dumps(clues, indent=4)

@@ -13,6 +13,7 @@ class TestGame(unittest.TestCase):
         self.words_by_team = {
             "red": ["Fair", "Fish", "Dinosaur"],
             "blue": ["Drill", "Hollywood", "Chocolate", "King"],
+            "nuetral": ["Ivory", "Shop"],
             "assassin": ["Turkey"],
         }
         self.test_game = Game(
@@ -20,7 +21,9 @@ class TestGame(unittest.TestCase):
         )
 
     def test_get_valid_teams(self):
-        self.assertEqual(self.test_game.get_valid_teams(), ["red", "blue", "assassin"])
+        self.assertEqual(
+            self.test_game.get_valid_teams(), ["red", "blue", "nuetral", "assassin"]
+        )
 
     def test_validate_team(self):
         self.assertTrue(self.test_game.validate_team("red"))

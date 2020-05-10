@@ -1,5 +1,3 @@
-Consider pulling from another API. We're heavy on associations and not enough on descriptors
-Need to add neutral words
-Need to skip unknown words. Currently we bomb if no words found from API
+Probably should make all words lowercase
 Finalize class structure
 Add tests
