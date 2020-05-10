@@ -92,9 +92,6 @@ class Game:
         Returns clues as dictionary
         """
 
-        valid_metrics = ("count", "sum", "product", "product_of_squares")
-        valid_metrics_string = ", ".join(valid_metrics)
-
         data = {}
 
         for word in words_to_connect:
@@ -155,6 +152,8 @@ class Game:
                 return df.to_dict("index")
 
             except KeyError:
+                valid_metrics = ("count", "sum", "product", "product_of_squares")
+                valid_metrics_string = ", ".join(valid_metrics)
                 raise Exception(
                     f"{metric} is not a valid metric. Expecting {valid_metrics_string}"
                 )
