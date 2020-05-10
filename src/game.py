@@ -77,44 +77,60 @@ class Game:
                         team_words.remove(word)
                         print(f"{word} removed from {team}")
 
-    def get_clues(self, words_to_connect, words_to_avoid, clues_to_give):
+    def get_clues(self, words_to_connect, words_to_avoid, clues_to_give, metric):
         """Get clues from words to connect and words to avoid"""
 
-        data = {}
+        valid_metrics = ("count", "sum", "product", "product_of_squares")
+        valid_metrics_string = ", ".join(valid_metrics)
 
-        for word in words_to_connect:
-            document = helpers.get_document(
-                self.client, self.database, self.collection, text=word
+        if metric not in valid_metrics:
+            raise Exception(
+                f"{metric} is not a valid metric. Expecting {valid_metrics_string}"
             )
-            for item, weight in document["weights"].items():
-                if item in data:
-                    data[item]["count"] += 1
-                    data[item]["product_of_squares"] *= weight ** 2
-                    data[item]["words_to_connect_matches"].append(word)
-                else:
-                    data[item] = {}
-                    data[item]["count"] = 1
-                    data[item]["product_of_squares"] = weight ** 2
-                    data[item]["words_to_connect_matches"] = [word]
-                    data[item]["words_to_avoid_matches"] = []
+        else:
 
-        for word in words_to_avoid:
-            document = helpers.get_document(
-                self.client, self.database, self.collection, text=word
-            )
-            for item, weight in document["weights"].items():
-                if item in data:
-                    data[item]["words_to_avoid_matches"] = [word]
+            data = {}
 
-        df = pd.DataFrame(data)
-        df = df.transpose()
-        # product_of_squares is dtype object so we need to convert it to int
-        df["product_of_squares"] = df["product_of_squares"].astype("int")
-        df = df.nlargest(clues_to_give, "product_of_squares")
+            for word in words_to_connect:
+                document = helpers.get_document(
+                    self.client, self.database, self.collection, text=word
+                )
+                for item, weight in document["weights"].items():
+                    # we don't want Drilling returned as a word associated with Drill
+                    if not item.startswith(word) and not word.startswith(item):
+                        if item in data:
+                            data[item]["count"] += 1
+                            data[item]["sum"] += weight
+                            data[item]["product"] *= weight
+                            data[item]["product_of_squares"] *= weight ** 2
+                            data[item]["words_to_connect_matches"].append(word)
+                        else:
+                            data[item] = {}
+                            data[item]["count"] = 1
+                            data[item]["sum"] = weight
+                            data[item]["product"] = weight
+                            data[item]["product_of_squares"] = weight ** 2
+                            data[item]["words_to_connect_matches"] = [word]
+                            data[item]["words_to_avoid_matches"] = []
 
-        return df.to_dict("index")
+            for word in words_to_avoid:
+                document = helpers.get_document(
+                    self.client, self.database, self.collection, text=word
+                )
+                for item, weight in document["weights"].items():
+                    if item in data:
+                        data[item]["words_to_avoid_matches"].append(word)
 
-    def give_clues(self, team, clues_to_give=3):
+            df = pd.DataFrame(data)
+            df = df.transpose()
+
+            # metrics are stored as dtype objects so we need to convert them
+            df[metric] = df[metric].astype("int")
+            df = df.nlargest(clues_to_give, metric)
+
+            return df.to_dict("index")
+
+    def give_clues(self, team, clues_to_give=3, metric="product_of_squares"):
         """Give clues for team"""
 
         if self.validate_team(team):
@@ -125,6 +141,6 @@ class Game:
                     for word in self.get_words(valid_team):
                         words_to_avoid.append(word)
 
-        clues = self.get_clues(words_to_connect, words_to_avoid, clues_to_give)
+        clues = self.get_clues(words_to_connect, words_to_avoid, clues_to_give, metric)
 
         return json.dumps(clues, indent=4)
