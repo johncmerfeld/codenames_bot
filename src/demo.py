@@ -1,6 +1,9 @@
 #! /usr/bin/env python3
 
-"""Demo of game class"""
+"""
+Demo of game class. Run with:
+$ python3 demo.py
+"""
 
 import game
 import settings
