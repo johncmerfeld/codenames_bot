@@ -145,7 +145,7 @@ class Game:
                 self.client,
                 self.database,
                 self.collection,
-                text_type=f"{word_to_connect}_{clue_type}",
+                text_type=f"{word_to_avoid}_{clue_type}",
             )
             if document:
                 for item, weight in document["items"].items():

@@ -30,20 +30,11 @@ if __name__ == "__main__":
             "Trip",
             "Hook",
         ],
-        "blue": [
-            "Palm",
-            "Tower",
-            "Crash",
-            "Scuba Diver",
-            "Comic",
-            "Ice Cream",
-            "Litter",
-            "Water",
-        ],
+        "blue": ["Palm", "Tower", "Scuba Diver", "Comic", "Ice Cream", "Water"],
         "nuetral": ["Yard", "Pyramid", "Battery", "Log", "Australia", "Ice", "Disease"],
         "assassin": ["Pistol"],
     }
 
     g = game.Game(client, settings.MONGO_DATABASE, settings.collection, words_by_team)
 
-    print(g.give_clues("red"))
+    print(g.give_clues("red", 5))
